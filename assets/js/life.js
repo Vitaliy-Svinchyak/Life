@@ -52,6 +52,7 @@
           config = {};
         }
         config.generationTime = config.generationTime ? config.generationTime : 500;
+        config.clearChilds = true;
         return config;
       }
 
@@ -148,6 +149,9 @@
         this.playground.width = this.columns * 10;
         this.playground.height = this.rows * 10;
 
+        this.config.maxX = this.elements.input.columns.value * 10;
+        this.config.maxY = this.elements.input.rows.value * 10;
+
         this.drawGrid();
       }
 
@@ -209,20 +213,45 @@
         if (!this.blocks[x + ":" + y]) {
 
           if (this.config.randomColor) {
-            this.context.fillStyle = this.getRandomColor();
+            this.context.fillStyle = this.getRandomColor(x, y);
+            //this.context.fillStyle = 'rgb(255, 0, 0)';
           }
           this.context.fillRect(x + 1, y + 1, 8, 8);
           this.blocks[x + ":" + y] = {x: x, y: y};
         }
       }
 
-      getRandomColor() {
+      getRandomColor(x, y) {
+        let r = Math.floor(255 / this.config.maxY * y);
+        let g = Math.floor(255 / this.config.maxX * x);
+        let b = r > g ? r - g : g - r;
+        let colorRgb = `rgb(${r}, ${g}, ${b})`;
+        return this.getHexRGBColor(colorRgb);
+
         let letters = '0123456789ABCDEF';
         let color = '#';
         for (let i = 0; i < 6; i++) {
           color += letters[Math.floor(Math.random() * 16)];
         }
+
         return color;
+      }
+
+      getHexRGBColor(color) {
+        color = color.replace(/\s/g, "");
+        let aRGB = color.match(/^rgb\((\d{1,3}[%]?),(\d{1,3}[%]?),(\d{1,3}[%]?)\)$/i);
+
+        if (aRGB) {
+          color = '';
+          for (let i = 1; i <= 3; i++) {
+            color += Math.round((aRGB[i][aRGB[i].length - 1] == "%" ? 2.55 : 1) * parseInt(aRGB[i])).toString(16).replace(/^(.)$/, '0$1');
+          }
+        }
+        else {
+          color = color.replace(/^#?([\da-f])([\da-f])([\da-f])$/i, '$1$1$2$2$3$3');
+        }
+
+        return '#' + color;
       }
 
       /**
@@ -234,8 +263,6 @@
         if (!this.gameStarted) {
           this.canEdit = false;
           this.gameStarted = true;
-          this.config.maxX = this.elements.input.columns.value * 10;
-          this.config.maxY = this.elements.input.rows.value * 10;
 
           let interval = setInterval(() => {
             this.findPotentialChilds();
