@@ -243,21 +243,21 @@
             //If everybody died
             if (Object.keys(this.blocks).length == 0) {
               clearInterval(interval);
-              //this.showStatistic();
+              this.showStatistic();
 
               return false;
             }
 
-            // let aliveCountLength = this.aliveCount.length;
-            // //Last three counts are not identical (defence from loop)
-            // if (this.aliveCount[aliveCountLength - 1] == this.aliveCount[aliveCountLength - 2]
-            //   && this.aliveCount[aliveCountLength - 2] == this.aliveCount[aliveCountLength - 3]
-            //   && aliveCountLength >= 2) {
-            //   clearInterval(interval);
-            //   this.showStatistic();
-            //
-            //   return false;
-            // }
+            let aliveCountLength = this.aliveCount.length;
+            //Last three counts are not identical (defence from loop)
+            if (this.aliveCount[aliveCountLength - 1] == this.aliveCount[aliveCountLength - 2]
+              && this.aliveCount[aliveCountLength - 2] == this.aliveCount[aliveCountLength - 3]
+              && aliveCountLength >= 2) {
+              clearInterval(interval);
+              this.showStatistic();
+
+              return false;
+            }
 
             this.filterBorned();
             this.nextGeneration();
