@@ -169,7 +169,7 @@
       createElements() {
         this.playground.addEventListener('mousemove', (e) => {
           if (this.canEdit) {
-            console.log(e);
+
             const x = Math.floor(e.layerX / 10) * 10 - 9;
             const y = Math.floor(e.layerY / 10) * 10 - 9;
 
