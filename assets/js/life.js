@@ -11,10 +11,11 @@
         this.header = document.getElementsByTagName("header")[0];
         this.info = document.getElementsByTagName("info")[0];
         this.canEdit = true;
-        this.count_alive = [];
+        this.alive = [];
         this.population = [0];
         this.blocks = this.canBorn = this.toDie = {};
         this.generation = this.borned = this.loneliness = this.overcrowding = 0;
+        this.gameStarted = false;
 
         this.config = {
           headerToggle: document.querySelector(".toggle-header"),
@@ -35,6 +36,8 @@
 
       /**
        * Bind toggle for right menu with config
+       *
+       * @returns {Life}
        */
       bindHeaderToggle() {
         this.config.headerToggle.addEventListener('click', (e) => {
@@ -57,6 +60,8 @@
 
       /**
        * Toggle for info in right bottom
+       *
+       * @returns {Life}
        */
       bindConfigToggle() {
         this.config.infoToggle.addEventListener('click', (e) => {
@@ -172,33 +177,37 @@
        * @returns {boolean} false при конце игры
        */
       start() {
-        this.canEdit = false;
-        var that = this;
-        let interval = setInterval(() => {
-          that.findPotentialChilds();
+        if (!this.gameStarted) {
+          this.canEdit = false;
+          this.gameStarted = true;
 
-          //If everybody died
-          if (Object.keys(this.blocks).length == 0) {
-            clearInterval(interval);
-            that.showMessage("You died.");
-            that.showStatistic();
-            return false;
-          }
+          let interval = setInterval(() => {
+            this.findPotentialChilds();
 
-          //Последние три не одинаковы
-          if (that.count_alive[that.count_alive.length - 1] == that.count_alive[that.count_alive.length - 2]
-            && that.count_alive[that.count_alive.length - 2] == that.count_alive[that.count_alive.length - 3]
-            && that.count_alive.length >= 2) {
-            clearInterval(interval);
-            that.showMessage("It's a loop.");
-            that.showStatistic();
-            return false;
-          }
+            //If everybody died
+            if (Object.keys(this.blocks).length == 0) {
+              clearInterval(interval);
+              this.showMessage("You died.");
+              this.showStatistic();
 
-          that.filterBorned();
-          that.nextGeneration();
-          //that.drawGrid();
-        }, 500);
+              return false;
+            }
+
+            //Последние три не одинаковы
+            if (this.alive[this.alive.length - 1] == this.alive[this.alive.length - 2]
+              && this.alive[this.alive.length - 2] == this.alive[this.alive.length - 3]
+              && this.alive.length >= 2) {
+              clearInterval(interval);
+              this.showMessage("It's a loop.");
+              this.showStatistic();
+
+              return false;
+            }
+
+            this.filterBorned();
+            this.nextGeneration();
+          }, 200);
+        }
       }
 
       /**
@@ -229,34 +238,36 @@
         this.canBorn = {};
 
         for (let coordinate in this.blocks) {
-          const unit = this.blocks[coordinate];
-          let neighbors = 0;
-          let neighborUnits = this.getUnitsToCheck(unit);
+          if (this.blocks.hasOwnProperty(coordinate)) {
+            const unit = this.blocks[coordinate];
+            let neighbors = 0;
+            let neighborUnits = Life.getUnitsToCheck(unit);
 
-          //Calculating a number of neighbors
-          calculatingNeighbors : for (let neighborKey in neighborUnits) {
+            //Calculating a number of neighbors
+            calculateNeighbors :for (let neighborKey in neighborUnits) {
 
-            const neighbor = neighborUnits[neighborKey];
-            const neighborCoordinate = neighbor.x + ":" + neighbor.y;
+              const neighbor = neighborUnits[neighborKey];
+              const neighborCoordinate = neighbor.x + ":" + neighbor.y;
 
-            if (this.blocks[neighborCoordinate] == undefined) {
-              this.canBorn[neighborCoordinate] = {x: neighbor.x, y: neighbor.y};
-            }
-            else {
-              neighbors++;
-              if (neighbors > 3) {
-                break calculatingNeighbors;
+              if (this.blocks[neighborCoordinate] == undefined) {
+                this.canBorn[neighborCoordinate] = {x: neighbor.x, y: neighbor.y};
+              }
+              else {
+                neighbors++;
+                if (neighbors > 3) {
+                  break calculateNeighbors;
+                }
               }
             }
-          }
 
-          if (neighbors < 3) {
-            this.toDie[coordinate] = unit;
-            this.loneliness++;
-          }
-          else if (neighbors > 3) {
-            this.toDie[coordinate] = unit;
-            this.overcrowding++;
+            if (neighbors < 3) {
+              this.toDie[coordinate] = unit;
+              this.loneliness++;
+            }
+            else if (neighbors > 3) {
+              this.toDie[coordinate] = unit;
+              this.overcrowding++;
+            }
           }
         }
       }
@@ -266,25 +277,27 @@
        */
       filterBorned() {
         for (let unitCoordinate in this.canBorn) {
-          const unit = this.canBorn[unitCoordinate];
-          let parents = 0;
-          let neighborUnits = this.getUnitsToCheck(unit);
+          if (this.canBorn.hasOwnProperty(unitCoordinate)) {
+            const unit = this.canBorn[unitCoordinate];
+            let parents = 0;
+            let neighborUnits = Life.getUnitsToCheck(unit);
 
-          calculatingParents : for (let neighborKey in neighborUnits) {
-            const neighbor = neighborUnits[neighborKey];
-            const neighborCoordinate = neighbor.x + ":" + neighbor.y;
+            for (let neighborKey in neighborUnits) {
+              const neighbor = neighborUnits[neighborKey];
+              const neighborCoordinate = neighbor.x + ":" + neighbor.y;
 
-            if (this.blocks[neighborCoordinate] != undefined) {
-              parents++;
+              if (this.blocks[neighborCoordinate] != undefined) {
+                parents++;
 
-              if (parents > 3) {
-                break calculatingParents;
+                if (parents > 3) {
+                  break;
+                }
               }
             }
-          }
 
-          if (parents != 3) {
-            delete this.canBorn[unitCoordinate];
+            if (parents != 3) {
+              delete this.canBorn[unitCoordinate];
+            }
           }
         }
       }
@@ -294,7 +307,7 @@
        * @param   {object} unit Unit around whom we must check
        * @returns {Array}  Array of units to check
        */
-      getUnitsToCheck(unit) {
+      static getUnitsToCheck(unit) {
         return [
           {x: unit.x, y: unit.y - 10},
           {x: unit.x, y: unit.y + 10},
@@ -318,24 +331,28 @@
 
         //Killing
         for (let killCoordinate in this.toDie) {
-          let unit = this.toDie[killCoordinate];
-          this.context.clearRect(unit.x, unit.y, 9, 9);
+          if (this.toDie.hasOwnProperty(killCoordinate)) {
+            let unit = this.toDie[killCoordinate];
+            this.context.clearRect(unit.x, unit.y, 9, 9);
 
-          delete this.blocks[killCoordinate];
-          delete this.toDie[killCoordinate];
+            delete this.blocks[killCoordinate];
+            delete this.toDie[killCoordinate];
+          }
         }
 
         //Creating
         for (let createCoordinate in this.canBorn) {
-          let unit = this.canBorn[createCoordinate];
-          this.context.fillRect(unit.x, unit.y, 9, 9);
+          if (this.canBorn.hasOwnProperty(createCoordinate)) {
+            let unit = this.canBorn[createCoordinate];
+            this.context.fillRect(unit.x, unit.y, 9, 9);
 
-          delete this.canBorn[createCoordinate];
-          this.blocks[createCoordinate] = unit;
+            delete this.canBorn[createCoordinate];
+            this.blocks[createCoordinate] = unit;
+          }
         }
 
         this.generation++;
-        this.count_alive.push(Object.keys(this.blocks).length);
+        this.alive.push(Object.keys(this.blocks).length);
         this.updateInfo();
       }
 
