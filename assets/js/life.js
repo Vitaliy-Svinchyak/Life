@@ -9,25 +9,38 @@
         this.config = this.filterConfig(config);
         this.playground = document.getElementById("playground");
         this.context = this.playground.getContext('2d');
-        this.header = document.getElementsByTagName("header")[0];
-        this.info = document.getElementsByTagName("info")[0];
-        this.canEdit = true;
-        this.alive = [];
-        this.population = [];
-        this.blocks = this.canBorn = this.toDie = {};
+
+        /**
+         * aliveCount - an array of number of alive units for defence from loop
+         * population - an array of number of population for final statistic
+         *
+         */
+        this.aliveCount = this.population = [];
+        this.blocks = this.toBorn = this.toDie = {};
         this.generation = this.borned = this.loneliness = this.overcrowding = 0;
+        this.canEdit = true;
         this.gameStarted = false;
 
         this.elements = {
-          headerToggle: document.querySelector(".toggle-header"),
-          infoToggle: document.querySelector(".toggle-info"),
-          createButton: document.getElementById("create"),
-          autoGenerateButton: document.getElementById("auto"),
-          startButtons: document.getElementsByClassName("play"),
-          rowsInput: document.getElementById("rows"),
-          columnsInput: document.getElementById("columns"),
-          modalBlock: document.getElementById("myModal")
-        };
+          toggle: {
+            header: document.querySelector(".toggle-header"),
+            info: document.querySelector(".toggle-info"),
+          },
+          buttons: {
+            create: document.getElementById("create"),
+            autoGenerate: document.getElementById("auto"),
+            start: document.getElementsByClassName("play"),
+          },
+          input: {
+            rows: document.getElementById("rows"),
+            columns: document.getElementById("columns"),
+          },
+          blocks: {
+            header: document.getElementsByTagName("header")[0],
+            info: document.getElementsByTagName("info")[0],
+          }
+        }
+        ;
 
         this.bindHeaderToggle()
           .bindConfigToggle()
@@ -48,7 +61,7 @@
        * @returns {Life}
        */
       bindHeaderToggle() {
-        this.elements.headerToggle.addEventListener('click', (e) => {
+        this.elements.toggle.header.addEventListener('click', (e) => {
           let icon = e.target.classList.contains('glyphicon') ? e.target : e.target.firstChild;
           let open = icon.classList.contains("glyphicon-eye-open");
           let right = 0;
@@ -60,7 +73,7 @@
             right = "-300px"
           }
 
-          this.header.style.right = right;
+          this.elements.blocks.header.style.right = right;
         });
 
         return this;
@@ -72,12 +85,12 @@
        * @returns {Life}
        */
       bindConfigToggle() {
-        this.elements.infoToggle.addEventListener('click', (e) => {
+        this.elements.toggle.info.addEventListener('click', (e) => {
           let icon = e.target.classList.contains('glyphicon') ? e.target : e.target.firstChild;
 
           icon.classList.toggle("glyphicon-eye-close");
           icon.classList.toggle("glyphicon-eye-open");
-          this.info.classList.toggle("mini");
+          this.elements.blocks.info.classList.toggle("mini");
         });
 
         return this;
@@ -87,12 +100,12 @@
        * Binds create, autoGenerate, playground, start buttons eventListeners
        */
       bindButtons() {
-        this.elements.createButton.addEventListener('click', () => {
+        this.elements.buttons.create.addEventListener('click', () => {
           this.canEdit = false;
           this.create();
         });
 
-        this.elements.autoGenerateButton.addEventListener('click', () => this.autoGenerate());
+        this.elements.buttons.autoGenerate.addEventListener('click', () => this.autoGenerate());
 
         this.playground.addEventListener('mousedown', () => {
           this.canEdit = true;
@@ -104,7 +117,7 @@
         });
 
         let buttonIndex = 0;
-        let buttonsList = this.elements.startButtons;
+        let buttonsList = this.elements.buttons.start;
         let listLength = buttonsList.length;
 
         for (buttonIndex; buttonIndex < listLength; buttonIndex++) {
@@ -118,8 +131,8 @@
       create() {
         this.canEdit = true;
 
-        this.rows = this.elements.rowsInput.value;
-        this.columns = this.elements.columnsInput.value;
+        this.rows = this.elements.input.rows.value;
+        this.columns = this.elements.input.columns.value;
 
         this.playground.style.display = "block";
         this.playground.width = this.columns * 10;
@@ -157,27 +170,26 @@
         this.columns = Math.floor((window.innerWidth - 35) / 10);
         this.rows = Math.floor((window.innerHeight - 35) / 10);
 
-        this.elements.rowsInput.value = this.rows;
-        this.elements.columnsInput.value = this.columns;
+        this.elements.input.rows.value = this.rows;
+        this.elements.input.columns.value = this.columns;
         this.create();
-        this.elements.headerToggle.click();
+        this.elements.toggle.header.click();
       }
 
       /**
        * Creates an element
        */
       createElements() {
-        this.playground.addEventListener('mousemove', (e) => {
-          if (this.canEdit) {
+        let eventHandler = (e) => {
+          const x = Math.floor(e.layerX / 10) * 10;
+          const y = Math.floor(e.layerY / 10) * 10;
 
-            const x = Math.floor(e.layerX / 10) * 10 - 9;
-            const y = Math.floor(e.layerY / 10) * 10 - 9;
+          this.context.fillRect(x, y, 9, 9);
+          this.blocks[x + ":" + y] = {x: x, y: y};
+        };
+        this.playground.addEventListener('mousemove', (e) => this.canEdit ? eventHandler(e) : false);
 
-            this.context.fillRect(x, y, 9, 9);
-            this.blocks[x + ":" + y] = {x: x, y: y};
-
-          }
-        });
+        this.playground.addEventListener('click', (e) => !this.gameStarted ? eventHandler(e) : false);
       }
 
       /**
@@ -201,10 +213,11 @@
               return false;
             }
 
-            //Последние три не одинаковы
-            if (this.alive[this.alive.length - 1] == this.alive[this.alive.length - 2]
-              && this.alive[this.alive.length - 2] == this.alive[this.alive.length - 3]
-              && this.alive.length >= 2) {
+            let aliveCountLength = this.aliveCount.length;
+            //Last three counts are not identical (defence from loop)
+            if (this.aliveCount[aliveCountLength - 1] == this.aliveCount[aliveCountLength - 2]
+              && this.aliveCount[aliveCountLength - 2] == this.aliveCount[aliveCountLength - 3]
+              && aliveCountLength >= 2) {
               clearInterval(interval);
               this.showStatistic();
 
@@ -222,7 +235,7 @@
        */
       findPotentialChilds() {
         this.toDie = {};
-        this.canBorn = {};
+        this.toBorn = {};
 
         for (let coordinate in this.blocks) {
           if (this.blocks.hasOwnProperty(coordinate)) {
@@ -237,7 +250,7 @@
               const neighborCoordinate = neighbor.x + ":" + neighbor.y;
 
               if (this.blocks[neighborCoordinate] == undefined) {
-                this.canBorn[neighborCoordinate] = {x: neighbor.x, y: neighbor.y};
+                this.toBorn[neighborCoordinate] = {x: neighbor.x, y: neighbor.y};
               }
               else {
                 neighbors++;
@@ -260,12 +273,12 @@
       }
 
       /**
-       * Очищает список детей от невозможныых
+       * Clears a list of child's which cannot be because of death of there parents
        */
       filterBorned() {
-        for (let unitCoordinate in this.canBorn) {
-          if (this.canBorn.hasOwnProperty(unitCoordinate)) {
-            const unit = this.canBorn[unitCoordinate];
+        for (let unitCoordinate in this.toBorn) {
+          if (this.toBorn.hasOwnProperty(unitCoordinate)) {
+            const unit = this.toBorn[unitCoordinate];
             let parents = 0;
             let neighborUnits = Life.getUnitsToCheck(unit);
 
@@ -283,7 +296,7 @@
             }
 
             if (parents != 3) {
-              delete this.canBorn[unitCoordinate];
+              delete this.toBorn[unitCoordinate];
             }
           }
         }
@@ -308,12 +321,10 @@
       }
 
       /**
-       * Убивает невыживших
-       * Создаёт детей
-       * Вызывает обновление инфы
+       * Kills units, creates childs, updates info
        */
       nextGeneration() {
-        this.borned += Object.keys(this.canBorn).length;
+        this.borned += Object.keys(this.toBorn).length;
         this.population.push(Object.keys(this.blocks).length);
 
         //Killing
@@ -328,18 +339,18 @@
         }
 
         //Creating
-        for (let createCoordinate in this.canBorn) {
-          if (this.canBorn.hasOwnProperty(createCoordinate)) {
-            let unit = this.canBorn[createCoordinate];
+        for (let createCoordinate in this.toBorn) {
+          if (this.toBorn.hasOwnProperty(createCoordinate)) {
+            let unit = this.toBorn[createCoordinate];
             this.context.fillRect(unit.x, unit.y, 9, 9);
 
-            delete this.canBorn[createCoordinate];
+            delete this.toBorn[createCoordinate];
             this.blocks[createCoordinate] = unit;
           }
         }
 
         this.generation++;
-        this.alive.push(Object.keys(this.blocks).length);
+        this.aliveCount.push(Object.keys(this.blocks).length);
         this.updateInfo();
       }
 
@@ -429,7 +440,7 @@
     }
 
     let config = {
-      generationTime: 200
+      generationTime: 5000
     };
     new Life(config);
 
