@@ -8,8 +8,8 @@
       constructor() {
         this.playground = document.getElementById("playground");
         this.context = this.playground.getContext('2d');
-        this.header = document.getElementsByTagName("header")[0]
-        this.info = document.getElementsByTagName("info")[0]
+        this.header = document.getElementsByTagName("header")[0];
+        this.info = document.getElementsByTagName("info")[0];
         this.canEdit = true;
         this.count_alive = [];
         this.population = [0];
@@ -369,25 +369,28 @@
       }
 
       /**
-       * Вызывает отрисовку стрелочек
-       * Рисует график популяции на поколение
+       * Draws a graphic
        */
       showStatistic() {
+        let x = 0;
+        let y = 0;
+        const playGroundHeight = this.playground.height;
+        const playGroundWidth = this.playground.width;
+        const xStep = (playGroundWidth - 210) / this.population.length;
+        const yStep = (playGroundHeight - 60) / Math.max.apply(Math, this.population);
+
         this.drawArrows();
 
-        var x_step = (this.playground.width - 210) / this.population.length;
-        var y_step = (this.playground.height - 60) / Math.max.apply(Math, this.population);
-        var x = 0;
-        var y = 0;
-        var that = this;
         this.context.beginPath();
 
-        this.context.moveTo(10, this.playground.height - 10);
-        this.population.forEach(function (e) {
-          y = that.playground.height - (e * y_step) - 10;
-          that.context.lineTo(x + 10, y);
-          x += x_step;
+        this.context.moveTo(10, playGroundHeight - 10);
+
+        this.population.forEach((e) => {
+          y = this.playground.height - (e * yStep) - 10;
+          this.context.lineTo(x + 10, y);
+          x += xStep;
         });
+
         this.context.strokeStyle = "#51be6e";
         this.context.lineWidth = 2;
         this.context.stroke();
