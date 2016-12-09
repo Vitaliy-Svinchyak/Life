@@ -229,8 +229,8 @@
         this.canBorn = {};
 
         for (let coordinate in this.blocks) {
-          let neighbors = 0;
           const unit = this.blocks[coordinate];
+          let neighbors = 0;
           let neighborUnits = this.getUnitsToCheck(unit);
 
           //Calculating a number of neighbors
@@ -265,23 +265,26 @@
        * Очищает список детей от невозможныых
        */
       filterBorned() {
-        var that = this;
-        for (var index in this.canBorn) {
-          var coor = this.canBorn[index];
-          var parents = 0;
+        for (let unitCoordinate in this.canBorn) {
+          const unit = this.canBorn[unitCoordinate];
+          let parents = 0;
+          let neighborUnits = this.getUnitsToCheck(unit);
 
-          //Координаты 8 соседей текущей клетки
-          var coor_to_check = this.getUnitsToCheck(coor);
+          calculatingParents : for (let neighborKey in neighborUnits) {
+            const neighbor = neighborUnits[neighborKey];
+            const neighborCoordinate = neighbor.x + ":" + neighbor.y;
 
-          coor_to_check.forEach(function (el) {
-            var name = el.x + ":" + el.y;
-            if (that.blocks[name] != undefined) {
+            if (this.blocks[neighborCoordinate] != undefined) {
               parents++;
+
+              if (parents > 3) {
+                break calculatingParents;
+              }
             }
-          });
-          //Не может родиться
+          }
+
           if (parents != 3) {
-            delete this.canBorn[index];
+            delete this.canBorn[unitCoordinate];
           }
         }
       }
