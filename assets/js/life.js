@@ -184,7 +184,7 @@
           const x = Math.floor(e.layerX / 10) * 10;
           const y = Math.floor(e.layerY / 10) * 10;
 
-          this.context.fillRect(x, y, 9, 9);
+          this.context.fillRect(x + 1, y + 1, 8, 8);
           this.blocks[x + ":" + y] = {x: x, y: y};
         };
         this.playground.addEventListener('mousemove', (e) => this.canEdit ? eventHandler(e) : false);
@@ -331,7 +331,7 @@
         for (let killCoordinate in this.toDie) {
           if (this.toDie.hasOwnProperty(killCoordinate)) {
             let unit = this.toDie[killCoordinate];
-            this.context.clearRect(unit.x, unit.y, 9, 9);
+            this.context.clearRect(unit.x + 1, unit.y + 1, 8, 8);
 
             delete this.blocks[killCoordinate];
             delete this.toDie[killCoordinate];
@@ -342,7 +342,7 @@
         for (let createCoordinate in this.toBorn) {
           if (this.toBorn.hasOwnProperty(createCoordinate)) {
             let unit = this.toBorn[createCoordinate];
-            this.context.fillRect(unit.x, unit.y, 9, 9);
+            this.context.fillRect(unit.x + 1, unit.y + 1, 8, 8);
 
             delete this.toBorn[createCoordinate];
             this.blocks[createCoordinate] = unit;
@@ -354,9 +354,6 @@
         this.updateInfo();
       }
 
-      /**
-       * Обновляет инфу
-       */
       updateInfo() {
         document.getElementById("generation").textContent = this.generation;
         document.getElementById("borned").textContent = this.borned;
@@ -394,7 +391,7 @@
       }
 
       /**
-       * Рисует стрелочки
+       * Draws arrows and text for statistic
        */
       drawArrows() {
         const playGroundHeight = this.playground.height;
@@ -440,7 +437,7 @@
     }
 
     let config = {
-      generationTime: 5000
+      generationTime: 300
     };
     new Life(config);
 
