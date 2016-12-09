@@ -24,7 +24,8 @@
           autoGenerateButton: document.getElementById("auto"),
           startButtons: document.getElementsByClassName("play"),
           rowsInput: document.getElementById("rows"),
-          columnsInput: document.getElementById("columns")
+          columnsInput: document.getElementById("columns"),
+          modalBlock: document.getElementById("myModal")
         };
 
         this.bindHeaderToggle()
@@ -158,10 +159,12 @@
             const x = Math.floor(e.x / 10) * 10 - 10;
             const y = Math.floor(e.y / 10) * 10 - 10;
 
+            this.context.beginPath();
             this.context.fillRect(x, y, 10, 10);
             this.blocks[x + ":" + y] = {x: x, y: y};
 
             this.drawBorders(x, y);
+            this.context.closePath();
           }
         });
       }
@@ -172,19 +175,19 @@
        * @param {int} y
        */
       drawBorders(x, y) {
-        this.context.beginPath();
+        //column
         this.context.moveTo(x + .5, y);
         this.context.lineTo(x + .5, y + 10.5);
         this.context.moveTo(x + 10.5, y + 10.5);
         this.context.lineTo(x + 10.5, y);
 
+        //row
         this.context.moveTo(x, y + .5);
         this.context.lineTo(x + 10.5, y + .5);
         this.context.moveTo(x + 10.5, y + 10.5);
         this.context.lineTo(x, y + 10.5);
 
         this.context.stroke();
-        this.context.closePath();
       }
 
       /**
@@ -228,18 +231,18 @@
        */
       showMessage(text) {
         document.querySelector(".modal-body p").textContent = text;
-        document.getElementById("myModal").style.display = "block";
-        document.getElementById("myModal").style.opacity = 1;
-        document.getElementById("myModal").style.backgroundColor = "rgba(0,0,0,.4)";
+        this.config.modalBlock.style.display = "block";
+        this.config.modalBlock.style.opacity = 1;
+        this.config.modalBlock.style.backgroundColor = "rgba(0,0,0,.4)";
       }
 
       /**
        * Скрывает сообщение
        */
       closeMessage() {
-        document.getElementById("myModal").style.display = "none";
-        document.getElementById("myModal").style.opacity = 0;
-        document.getElementById("myModal").style.backgroundColor = "";
+        this.config.modalBlock.style.display = "none";
+        this.config.modalBlock.style.opacity = 0;
+        this.config.modalBlock.style.backgroundColor = "";
       }
 
       /**
@@ -370,7 +373,7 @@
        * Рисует график популяции на поколение
        */
       showStatistic() {
-        this.drowArrows();
+        this.drawArrows();
 
         var x_step = (this.playground.width - 210) / this.population.length;
         var y_step = (this.playground.height - 60) / Math.max.apply(Math, this.population);
@@ -393,34 +396,41 @@
       /**
        * Рисует стрелочки
        */
-      drowArrows() {
-        this.context.clearRect(0, 0, this.playground.width, this.playground.height);
+      drawArrows() {
+        const playGroundHeight = this.playground.height;
+        const playGroundWidth = this.playground.width;
+
+        this.context.clearRect(0, 0, playGroundWidth, playGroundHeight);
 
         this.context.font = "italic 14pt Arial";
 
         this.context.beginPath();
-        //Нижняя левая
-        this.context.moveTo(0, this.playground.height - 10);
-        this.context.lineTo(this.playground.width / 2 - 30, this.playground.height - 10);
-        //Текст
-        this.context.fillText("Generation", this.playground.width / 2 - 25, this.playground.height - 5);
-        //Нижняя правая
-        this.context.moveTo(this.playground.width / 2 + 80, this.playground.height - 10);
-        this.context.lineTo(this.playground.width - 200, this.playground.height - 10);
-        //Нижняя стрелочка
-        this.context.lineTo(this.playground.width - 205, this.playground.height - 15);
-        this.context.moveTo(this.playground.width - 200, this.playground.height - 10);
-        this.context.lineTo(this.playground.width - 205, this.playground.height - 5);
 
-        //Левая нижняя
-        this.context.moveTo(10, this.playground.height);
-        this.context.lineTo(10, this.playground.height / 2);
-        //Текст
-        this.context.fillText("Population", 5, this.playground.height / 2 - 10);
-        //Левая верхняя
-        this.context.moveTo(10, this.playground.height / 2 - 30);
+        //Left bottom
+        this.context.moveTo(0, playGroundHeight - 10);
+        this.context.lineTo(playGroundWidth / 2 - 30, playGroundHeight - 10);
+
+        this.context.fillText("Generation", playGroundWidth / 2 - 25, playGroundHeight - 5);
+
+        //Right bottom
+        this.context.moveTo(playGroundWidth / 2 + 80, playGroundHeight - 10);
+        this.context.lineTo(playGroundWidth - 200, playGroundHeight - 10);
+
+        //Bottom arrow
+        this.context.lineTo(playGroundWidth - 205, playGroundHeight - 15);
+        this.context.moveTo(playGroundWidth - 200, playGroundHeight - 10);
+        this.context.lineTo(playGroundWidth - 205, playGroundHeight - 5);
+
+        //Right Top
+        this.context.moveTo(10, playGroundHeight);
+        this.context.lineTo(10, playGroundHeight / 2);
+
+        this.context.fillText("Population", 5, playGroundHeight / 2 - 10);
+
+        //Left top
+        this.context.moveTo(10, playGroundHeight / 2 - 30);
         this.context.lineTo(10, 50);
-        //Левая стрелочка
+        //Left arrow
         this.context.lineTo(15, 55);
         this.context.moveTo(10, 50);
         this.context.lineTo(5, 55);
@@ -430,7 +440,8 @@
       }
 
     }
-    var game = new Life();
+
+    new Life();
 
   });
 })();
