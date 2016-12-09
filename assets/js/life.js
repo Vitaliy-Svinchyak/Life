@@ -108,13 +108,23 @@
         this.elements.buttons.autoGenerate.addEventListener('click', () => this.autoGenerate());
 
         this.playground.addEventListener('mousedown', () => {
-          this.canEdit = true;
-          this.createElements();
+          if (!this.gameStarted) {
+            this.canEdit = true;
+            this.createElements();
+          }
         });
 
         this.playground.addEventListener('mouseup', () => {
           this.canEdit = false;
         });
+
+        document.getElementById('colors').addEventListener('change', (e) => {
+          this.config.randomColor = e.target.checked;
+        });
+        document.getElementById('clearChilds').addEventListener('change', (e) => {
+          this.config.clearChilds = e.target.checked;
+        });
+
 
         let buttonIndex = 0;
         let buttonsList = this.elements.buttons.start;
@@ -184,12 +194,35 @@
           const x = Math.floor(e.layerX / 10) * 10;
           const y = Math.floor(e.layerY / 10) * 10;
 
-          this.context.fillRect(x + 1, y + 1, 8, 8);
-          this.blocks[x + ":" + y] = {x: x, y: y};
+          this.createBlock(x, y);
         };
         this.playground.addEventListener('mousemove', (e) => this.canEdit ? eventHandler(e) : false);
 
         this.playground.addEventListener('click', (e) => !this.gameStarted ? eventHandler(e) : false);
+      }
+
+      createBlock(x, y) {
+        if (x < 0 || y < 0 ||
+          x > this.config.maxX || y > this.config.maxY) {
+          return false;
+        }
+        if (!this.blocks[x + ":" + y]) {
+
+          if (this.config.randomColor) {
+            this.context.fillStyle = this.getRandomColor();
+          }
+          this.context.fillRect(x + 1, y + 1, 8, 8);
+          this.blocks[x + ":" + y] = {x: x, y: y};
+        }
+      }
+
+      getRandomColor() {
+        let letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
       }
 
       /**
@@ -201,6 +234,8 @@
         if (!this.gameStarted) {
           this.canEdit = false;
           this.gameStarted = true;
+          this.config.maxX = this.elements.input.columns.value * 10;
+          this.config.maxY = this.elements.input.rows.value * 10;
 
           let interval = setInterval(() => {
             this.findPotentialChilds();
@@ -208,21 +243,21 @@
             //If everybody died
             if (Object.keys(this.blocks).length == 0) {
               clearInterval(interval);
-              this.showStatistic();
+              //this.showStatistic();
 
               return false;
             }
 
-            let aliveCountLength = this.aliveCount.length;
-            //Last three counts are not identical (defence from loop)
-            if (this.aliveCount[aliveCountLength - 1] == this.aliveCount[aliveCountLength - 2]
-              && this.aliveCount[aliveCountLength - 2] == this.aliveCount[aliveCountLength - 3]
-              && aliveCountLength >= 2) {
-              clearInterval(interval);
-              this.showStatistic();
-
-              return false;
-            }
+            // let aliveCountLength = this.aliveCount.length;
+            // //Last three counts are not identical (defence from loop)
+            // if (this.aliveCount[aliveCountLength - 1] == this.aliveCount[aliveCountLength - 2]
+            //   && this.aliveCount[aliveCountLength - 2] == this.aliveCount[aliveCountLength - 3]
+            //   && aliveCountLength >= 2) {
+            //   clearInterval(interval);
+            //   this.showStatistic();
+            //
+            //   return false;
+            // }
 
             this.filterBorned();
             this.nextGeneration();
@@ -241,7 +276,7 @@
           if (this.blocks.hasOwnProperty(coordinate)) {
             const unit = this.blocks[coordinate];
             let neighbors = 0;
-            let neighborUnits = Life.getUnitsToCheck(unit);
+            let neighborUnits = this.getUnitsToCheck(unit);
 
             //Calculating a number of neighbors
             calculateNeighbors :for (let neighborKey in neighborUnits) {
@@ -276,27 +311,29 @@
        * Clears a list of child's which cannot be because of death of there parents
        */
       filterBorned() {
-        for (let unitCoordinate in this.toBorn) {
-          if (this.toBorn.hasOwnProperty(unitCoordinate)) {
-            const unit = this.toBorn[unitCoordinate];
-            let parents = 0;
-            let neighborUnits = Life.getUnitsToCheck(unit);
+        if (this.config.clearChilds) {
+          for (let unitCoordinate in this.toBorn) {
+            if (this.toBorn.hasOwnProperty(unitCoordinate)) {
+              const unit = this.toBorn[unitCoordinate];
+              let parents = 0;
+              let neighborUnits = this.getUnitsToCheck(unit);
 
-            for (let neighborKey in neighborUnits) {
-              const neighbor = neighborUnits[neighborKey];
-              const neighborCoordinate = neighbor.x + ":" + neighbor.y;
+              for (let neighborKey in neighborUnits) {
+                const neighbor = neighborUnits[neighborKey];
+                const neighborCoordinate = neighbor.x + ":" + neighbor.y;
 
-              if (this.blocks[neighborCoordinate] != undefined) {
-                parents++;
+                if (this.blocks[neighborCoordinate] != undefined) {
+                  parents++;
 
-                if (parents > 3) {
-                  break;
+                  if (parents > 3) {
+                    break;
+                  }
                 }
               }
-            }
 
-            if (parents != 3) {
-              delete this.toBorn[unitCoordinate];
+              if (parents != 3) {
+                delete this.toBorn[unitCoordinate];
+              }
             }
           }
         }
@@ -307,17 +344,34 @@
        * @param   {object} unit Unit around whom we must check
        * @returns {Array}  Array of units to check
        */
-      static getUnitsToCheck(unit) {
-        return [
-          {x: unit.x, y: unit.y - 10},
-          {x: unit.x, y: unit.y + 10},
-          {x: unit.x - 10, y: unit.y},
-          {x: unit.x - 10, y: unit.y - 10},
-          {x: unit.x - 10, y: unit.y + 10},
-          {x: unit.x + 10, y: unit.y},
-          {x: unit.x + 10, y: unit.y - 10},
-          {x: unit.x + 10, y: unit.y + 10},
-        ];
+      getUnitsToCheck(unit) {
+        let units = [];
+        if (unit.y - 10 >= 0) {
+          units.push({x: unit.x, y: unit.y - 10});
+
+          if (unit.x - 10 >= 0) {
+            units.push({x: unit.x - 10, y: unit.y});
+            units.push({x: unit.x - 10, y: unit.y - 10});
+          }
+
+          if (unit.x + 10 <= this.config.maxY) {
+            units.push({x: unit.x + 10, y: unit.y - 10});
+          }
+        }
+
+        if (unit.y + 10 <= this.config.maxY) {
+          units.push({x: unit.x, y: unit.y + 10});
+
+          if (unit.x + 10 <= this.config.maxY) {
+            units.push({x: unit.x + 10, y: unit.y});
+            units.push({x: unit.x + 10, y: unit.y + 10});
+          }
+
+          if (unit.x - 10 >= 0) {
+            units.push({x: unit.x - 10, y: unit.y + 10});
+          }
+        }
+        return units;
       }
 
       /**
@@ -342,7 +396,7 @@
         for (let createCoordinate in this.toBorn) {
           if (this.toBorn.hasOwnProperty(createCoordinate)) {
             let unit = this.toBorn[createCoordinate];
-            this.context.fillRect(unit.x + 1, unit.y + 1, 8, 8);
+            this.createBlock(unit.x, unit.y);
 
             delete this.toBorn[createCoordinate];
             this.blocks[createCoordinate] = unit;
@@ -437,7 +491,8 @@
     }
 
     let config = {
-      generationTime: 300
+      generationTime: 300,
+      //randomColor: true
     };
     new Life(config);
 
