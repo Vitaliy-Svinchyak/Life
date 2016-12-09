@@ -22,10 +22,10 @@
           createButton: document.getElementById("create"),
           closeMessageButton: document.getElementById("close_message"),
           autoGenerateButton: document.getElementById("auto"),
-          startButtons: document.getElementsByClassName("play")
+          startButtons: document.getElementsByClassName("play"),
+          rowsInput: document.getElementById("rows"),
+          columnsInput: document.getElementById("columns")
         };
-
-        var that = this;
 
         this.bindHeaderToggle()
           .bindConfigToggle()
@@ -99,14 +99,13 @@
       }
 
       /**
-       * Вытскивает параметры поля,
-       * Устанавливает размеры canvas
-       * Вызывает отрисовку сетки
+       * Creates a playground
        */
       create() {
         this.canEdit = true;
-        this.rows = document.getElementById("rows").value;
-        this.columns = document.getElementById("columns").value;
+
+        this.rows = this.config.rowsInput.value;
+        this.columns = this.config.columnsInput.value;
 
         this.playground.style.display = "block";
         this.playground.width = this.columns * 10;
@@ -116,73 +115,76 @@
       }
 
       /**
-       * Рисует сетку
+       * Draws grid
        */
       drawGrid() {
-        //Столбец
-        for (var x = 0.5; x <= this.playground.width; x += 10) {
-          this.context.moveTo(x, 0);
-          this.context.lineTo(x, this.playground.height);
+        let coordinate = 0.5;
+        let playGroundWidth = this.playground.width;
+        let playGroundHeight = this.playground.height;
+
+        for (coordinate; coordinate <= playGroundWidth; coordinate += 10) {
+          //Column
+          this.context.moveTo(coordinate, 0);
+          this.context.lineTo(coordinate, playGroundHeight);
+          //Row
+          this.context.moveTo(0, coordinate);
+          this.context.lineTo(playGroundWidth, coordinate);
         }
-        //Строка
-        for (var y = 0.5; y <= this.playground.height; y += 10) {
-          this.context.moveTo(0, y);
-          this.context.lineTo(this.playground.width, y);
-        }
+
         this.context.strokeStyle = "#eee";
         this.context.stroke();
       }
 
       /**
-       * Выщитывает количество строк и  столбцов исходя из размеров экрана
-       * Заполняет поля формы
-       * Вызывает создание
+       * Calculates a number of rows & columns based on screen width & height
+       * And calls create()
        */
       autoGenerate() {
         this.columns = Math.floor((window.innerWidth - 35) / 10);
         this.rows = Math.floor((window.innerHeight - 35) / 10);
 
-        document.getElementById("rows").value = this.rows;
-        document.getElementById("columns").value = this.columns;
+        this.config.rowsInput.value = this.rows;
+        this.config.columnsInput.value = this.columns;
         this.create();
         this.config.headerToggle.click();
       }
 
       /**
-       * По координатам мыши выщитывает расположение и рисует клетки
+       * Creates an element
        */
       createElements() {
-        if (this.canEdit) {
-          this.playground.addEventListener('mousemove', (e) => {
-            if (this.canEdit) {
-              var x = Math.floor(e.x / 10) * 10 - 10;
-              var y = Math.floor(e.y / 10) * 10 - 30;
-              this.context.fillRect(x, y, 10, 10);
-              this.blocks[x + ":" + y] = {x: x, y: y};
-              this.drowBorders(x, y);
-            }
-          });
-        }
+        this.playground.addEventListener('mousemove', (e) => {
+          if (this.canEdit) {
+            const x = Math.floor(e.x / 10) * 10 - 10;
+            const y = Math.floor(e.y / 10) * 10 - 10;
+
+            this.context.fillRect(x, y, 10, 10);
+            this.blocks[x + ":" + y] = {x: x, y: y};
+
+            this.drawBorders(x, y);
+          }
+        });
       }
 
       /**
-       * Рисует границы вокруг переданнной клетки
-       * @param {number} x координата клетки
-       * @param {number} y координата клетки
+       * Redraws only 2 columns & rows near cursor coordinate
+       * @param {int} x
+       * @param {int} y
        */
-      drowBorders(x, y) {
-        this.context.moveTo(x + .5, 0);
-        this.context.lineTo(x + .5, this.playground.height);
-        this.context.moveTo(x + 10.5, 0);
-        this.context.lineTo(x + 10.5, this.playground.height);
+      drawBorders(x, y) {
+        this.context.beginPath();
+        this.context.moveTo(x + .5, y);
+        this.context.lineTo(x + .5, y + 10.5);
+        this.context.moveTo(x + 10.5, y + 10.5);
+        this.context.lineTo(x + 10.5, y);
 
-        this.context.moveTo(0, y + .5);
-        this.context.lineTo(this.playground.width, y + .5);
-        this.context.moveTo(0, y + 10.5);
-        this.context.lineTo(this.playground.width, y + 10.5);
+        this.context.moveTo(x, y + .5);
+        this.context.lineTo(x + 10.5, y + .5);
+        this.context.moveTo(x + 10.5, y + 10.5);
+        this.context.lineTo(x, y + 10.5);
 
-        this.context.strokeStyle = "#eee";
         this.context.stroke();
+        this.context.closePath();
       }
 
       /**
