@@ -1,101 +1,101 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Life</title>
-        <meta charset="utf-8">
-        <link rel="shortcut icon" href="lizard.png" type="image/png">
-        <link rel="stylesheet" type="css" href="assets/css/bootstrap.min.css" />
-        <link rel="stylesheet" type="css" href="assets/css/life.css" />
-        <link rel="stylesheet" type="css" href="assets/css/font-awesome.min.css" />
-        <script type="text/javascript" src="assets/js/life.js"></script>
-    </head>
-
-    <body>
-        <header>
-           
-            <div class="input-group" style="margin-bottom: 10px;">
+  <head>
+    <title>Life</title>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="lizard.png" type="image/png">
+    <link rel="stylesheet" rel="stylesheet" type="text/css" href="/assets/css/bootstrap.min.css"/>
+    <link rel="stylesheet" rel="stylesheet" type="text/css" href="/assets/css/life.css"/>
+    <link rel="stylesheet" rel="stylesheet" type="text/css" href="/assets/css/font-awesome.min.css"/>
+    <script type="text/javascript" src="/assets/js/life.js"></script>
+  </head>
+  
+  <body>
+    <header>
+      
+      <div class="input-group" style="margin-bottom: 10px;">
                 <span class="input-group-addon">
                     <i class="glyphicon glyphicon-option-horizontal"></i>
                 </span>
-                <input type="number" class="form-control input-red" placeholder="Rows" id="rows">                                        
-            </div>
-            
-             <div class="input-group" style="margin-bottom: 10px;">
+        <input type="number" class="form-control input-red" placeholder="Rows" id="rows">
+      </div>
+      
+      <div class="input-group" style="margin-bottom: 10px;">
                 <span class="input-group-addon">
                     <i class="glyphicon glyphicon-option-vertical"></i>
                 </span>
-                <input type="number" class="form-control input-red" placeholder="Columns" id="columns">                                        
-            </div>
-            
-            <div class="control-buttons">
-                <a class="btn btn-md btn-red" id="auto"> Auto </a>
-                <a class="btn btn-md btn-red" id="create"> Create </a>
-                <a class="btn btn-md btn-red play"> Play </a>
-            </div>
-            
-        </header>
-        
-        <info class="mini">
-            <table>
-                <tr>
-                    <td>
-                        <span class="max">Generation</span>
-                        <span class="mini"><i class="fa fa-refresh"></i></span>
-                    </td>
-                    <td id="generation">0</td>
-                </tr>
-                <tr>
-                    <td>
-                        <span class="max">Borned</span>
-                        <span class="mini"> <i class="fa fa-plus"></i></span>
-                    </td>
-                    <td id="borned">0</td>
-                </tr>
-                <tr>
-                    <td>
-                        <span class="max">Died</span>
-                         <span class="mini"> <i class="fa fa-minus"></i></span>
-                    </td>
-                    <td id="died">0</td>
-                </tr>
-                <tr>
-                    <td>
-                        <span class="max">Died(overcrowding)</span>
-                        <span class="mini"><i class="fa fa-users"></i></span>
-                    </td>
-                    <td id="overcrowding">0</td>
-                </tr>
-                <tr>
-                    <td>
-                        <span class="max">Died(loneliness)</span>
-                        <span class="mini"><i class="fa fa-user"></i></span>
-                    </td>
-                    <td id="loneliness">0</td>
-                </tr>
-            </table>
-        </info>
-        
-        <a class="right-button toggle-header"><i class="glyphicon glyphicon-eye-close"></i></a>
-        <a class="right-button play"><i class="glyphicon glyphicon-play"></i></a>
-        <a class="right-button toggle-info"><i class="glyphicon glyphicon-eye-close"></i></a>
-        
-        <canvas id="playground" style="margin: 10px;"></canvas>
-        
-        
-        <div id="myModal" class="modal fade" role="dialog">
-            <div class="modal-dialog modal-sm">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" id="close_message">&times;</button>
-                        <h4 class="modal-title">The end</h4>
-                    </div>
-                    <div class="modal-body">
-                        <p></p>
-                    </div>
-                </div>
-            </div>
+        <input type="number" class="form-control input-red" placeholder="Columns" id="columns">
+      </div>
+      
+      <div class="control-buttons">
+        <a class="btn btn-md btn-red" id="auto"> Auto </a>
+        <a class="btn btn-md btn-red" id="create"> Create </a>
+        <a class="btn btn-md btn-red play"> Play </a>
+      </div>
+    
+    </header>
+    
+    <info class="mini">
+      <table>
+        <tr>
+          <td>
+            <span class="max">Generation</span>
+            <span class="mini"><i class="fa fa-refresh"></i></span>
+          </td>
+          <td id="generation">0</td>
+        </tr>
+        <tr>
+          <td>
+            <span class="max">Borned</span>
+            <span class="mini"> <i class="fa fa-plus"></i></span>
+          </td>
+          <td id="borned">0</td>
+        </tr>
+        <tr>
+          <td>
+            <span class="max">Died</span>
+            <span class="mini"> <i class="fa fa-minus"></i></span>
+          </td>
+          <td id="died">0</td>
+        </tr>
+        <tr>
+          <td>
+            <span class="max">Died(overcrowding)</span>
+            <span class="mini"><i class="fa fa-users"></i></span>
+          </td>
+          <td id="overcrowding">0</td>
+        </tr>
+        <tr>
+          <td>
+            <span class="max">Died(loneliness)</span>
+            <span class="mini"><i class="fa fa-user"></i></span>
+          </td>
+          <td id="loneliness">0</td>
+        </tr>
+      </table>
+    </info>
+    
+    <a class="right-button toggle-header"><i class="glyphicon glyphicon-eye-close"></i></a>
+    <a class="right-button play"><i class="glyphicon glyphicon-play"></i></a>
+    <a class="right-button toggle-info"><i class="glyphicon glyphicon-eye-close"></i></a>
+    
+    <canvas id="playground" style="margin: 10px;"></canvas>
+    
+    
+    <div id="myModal" class="modal fade" role="dialog">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" id="close_message">&times;</button>
+            <h4 class="modal-title">The end</h4>
+          </div>
+          <div class="modal-body">
+            <p></p>
+          </div>
         </div>
-        
-    </body>
+      </div>
+    </div>
+  
+  </body>
 </html>
 
