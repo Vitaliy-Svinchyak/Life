@@ -13,7 +13,7 @@
         this.canEdit = true;
         this.count_alive = [];
         this.population = [0];
-        this.blocks = this.can_born = this.to_die = {};
+        this.blocks = this.canBorn = this.toDie = {};
         this.generation = this.borned = this.loneliness = this.overcrowding = 0;
 
         this.config = {
@@ -156,38 +156,14 @@
       createElements() {
         this.playground.addEventListener('mousemove', (e) => {
           if (this.canEdit) {
-            const x = Math.floor(e.x / 10) * 10 - 10;
-            const y = Math.floor(e.y / 10) * 10 - 10;
+            const x = Math.floor(e.x / 10) * 10 - 9;
+            const y = Math.floor(e.y / 10) * 10 - 9;
 
-            this.context.beginPath();
-            this.context.fillRect(x, y, 10, 10);
+            this.context.fillRect(x, y, 9, 9);
             this.blocks[x + ":" + y] = {x: x, y: y};
 
-            this.drawBorders(x, y);
-            this.context.closePath();
           }
         });
-      }
-
-      /**
-       * Redraws only 2 columns & rows near cursor coordinate
-       * @param {int} x
-       * @param {int} y
-       */
-      drawBorders(x, y) {
-        //column
-        this.context.moveTo(x + .5, y);
-        this.context.lineTo(x + .5, y + 10.5);
-        this.context.moveTo(x + 10.5, y + 10.5);
-        this.context.lineTo(x + 10.5, y);
-
-        //row
-        this.context.moveTo(x, y + .5);
-        this.context.lineTo(x + 10.5, y + .5);
-        this.context.moveTo(x + 10.5, y + 10.5);
-        this.context.lineTo(x, y + 10.5);
-
-        this.context.stroke();
       }
 
       /**
@@ -198,11 +174,11 @@
       start() {
         this.canEdit = false;
         var that = this;
-        var interval = setInterval(function () {
+        let interval = setInterval(() => {
           that.findPotentialChilds();
 
-          //Есть хоть один живой
-          if (Object.keys(that.blocks).length == 0) {
+          //If everybody died
+          if (Object.keys(this.blocks).length == 0) {
             clearInterval(interval);
             that.showMessage("You died.");
             that.showStatistic();
@@ -221,7 +197,7 @@
 
           that.filterBorned();
           that.nextGeneration();
-          that.drawGrid();
+          //that.drawGrid();
         }, 500);
       }
 
@@ -246,38 +222,40 @@
       }
 
       /**
-       * Проходит по блокам и записывает всех потенциальных детей этого поколения а также тех, кто умрёт в этом поколении
+       * Filters whom to die and whom to born
        */
       findPotentialChilds() {
-        this.to_die = {};
-        this.can_born = {};
+        this.toDie = {};
+        this.canBorn = {};
 
-        for (var index in this.blocks) {
-          var that = this;
-          var coor = this.blocks[index];
-          var neighbors = 0;
+        for (let coordinate in this.blocks) {
+          let neighbors = 0;
+          const unit = this.blocks[coordinate];
+          let neighborUnits = this.getUnitsToCheck(unit);
 
-          //Координаты 8 соседей текущей клетки
-          var coor_to_check = this.getCoorToCheck(coor);
+          //Calculating a number of neighbors
+          calculatingNeighbors : for (let neighborKey in neighborUnits) {
 
-          coor_to_check.forEach(function (el) {
-            var name = el.x + ":" + el.y;
-            if (that.blocks[name] == undefined) {
-              that.can_born[name] = {x: el.x, y: el.y};
+            const neighbor = neighborUnits[neighborKey];
+            const neighborCoordinate = neighbor.x + ":" + neighbor.y;
+
+            if (this.blocks[neighborCoordinate] == undefined) {
+              this.canBorn[neighborCoordinate] = {x: neighbor.x, y: neighbor.y};
             }
             else {
               neighbors++;
+              if (neighbors > 3) {
+                break calculatingNeighbors;
+              }
             }
-          });
+          }
 
-          //Одиночество
           if (neighbors < 3) {
-            this.to_die[index] = coor;
+            this.toDie[coordinate] = unit;
             this.loneliness++;
           }
-          //Перенаселение
           else if (neighbors > 3) {
-            this.to_die[index] = coor;
+            this.toDie[coordinate] = unit;
             this.overcrowding++;
           }
         }
@@ -288,12 +266,12 @@
        */
       filterBorned() {
         var that = this;
-        for (var index in this.can_born) {
-          var coor = this.can_born[index];
+        for (var index in this.canBorn) {
+          var coor = this.canBorn[index];
           var parents = 0;
 
           //Координаты 8 соседей текущей клетки
-          var coor_to_check = this.getCoorToCheck(coor);
+          var coor_to_check = this.getUnitsToCheck(coor);
 
           coor_to_check.forEach(function (el) {
             var name = el.x + ":" + el.y;
@@ -303,26 +281,26 @@
           });
           //Не может родиться
           if (parents != 3) {
-            delete this.can_born[index];
+            delete this.canBorn[index];
           }
         }
       }
 
       /**
-       * Подбирает массив координата для поиска детей
-       * @param   {object} coor объект координат
-       * @returns {Array}  массив координат для поиска
+       * Returns an array of units to check on exist
+       * @param   {object} unit Unit around whom we must check
+       * @returns {Array}  Array of units to check
        */
-      getCoorToCheck(coor) {
+      getUnitsToCheck(unit) {
         return [
-          {x: coor.x, y: coor.y - 10},
-          {x: coor.x, y: coor.y + 10},
-          {x: coor.x - 10, y: coor.y},
-          {x: coor.x - 10, y: coor.y - 10},
-          {x: coor.x - 10, y: coor.y + 10},
-          {x: coor.x + 10, y: coor.y},
-          {x: coor.x + 10, y: coor.y - 10},
-          {x: coor.x + 10, y: coor.y + 10},
+          {x: unit.x, y: unit.y - 10},
+          {x: unit.x, y: unit.y + 10},
+          {x: unit.x - 10, y: unit.y},
+          {x: unit.x - 10, y: unit.y - 10},
+          {x: unit.x - 10, y: unit.y + 10},
+          {x: unit.x + 10, y: unit.y},
+          {x: unit.x + 10, y: unit.y - 10},
+          {x: unit.x + 10, y: unit.y + 10},
         ];
       }
 
@@ -332,24 +310,25 @@
        * Вызывает обновление инфы
        */
       nextGeneration() {
-        this.borned += Object.keys(this.can_born).length;
+        this.borned += Object.keys(this.canBorn).length;
         this.population.push(Object.keys(this.blocks).length);
 
-        //Убиваем
-        for (var index in this.to_die) {
-          var coor = this.to_die[index];
-          this.context.clearRect(coor.x, coor.y, 10, 10);
+        //Killing
+        for (let killCoordinate in this.toDie) {
+          let unit = this.toDie[killCoordinate];
+          this.context.clearRect(unit.x, unit.y, 9, 9);
 
-          delete this.blocks[index];
-          delete this.to_die[index];
+          delete this.blocks[killCoordinate];
+          delete this.toDie[killCoordinate];
         }
-        //Рождаем
-        for (var index in this.can_born) {
-          var coor = this.can_born[index];
-          this.context.fillRect(coor.x, coor.y, 10, 10);
 
-          delete this.can_born[index];
-          this.blocks[index] = coor;
+        //Creating
+        for (let createCoordinate in this.canBorn) {
+          let unit = this.canBorn[createCoordinate];
+          this.context.fillRect(unit.x, unit.y, 9, 9);
+
+          delete this.canBorn[createCoordinate];
+          this.blocks[createCoordinate] = unit;
         }
 
         this.generation++;

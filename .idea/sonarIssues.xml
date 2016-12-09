@@ -23,6 +23,21 @@
             <set />
           </value>
         </entry>
+        <entry key="$PROJECT_DIR$/../skynet2/src/app/+partners/event-participant-companies/hosting-roles/hosting-roles.component.ts">
+          <value>
+            <set />
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/../skynet2/src/app/shared/models/agenda-element-types/agenda-element-type.service.ts">
+          <value>
+            <set />
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/../skynet2/src/app/shared/models/event-participant-roles/event-participant-role.service.ts">
+          <value>
+            <set />
+          </value>
+        </entry>
       </map>
     </option>
   </component>
