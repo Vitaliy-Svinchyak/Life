@@ -5,23 +5,23 @@
 
     class Life {
 
-      constructor() {
+      constructor(config) {
+        this.config = this.filterConfig(config);
         this.playground = document.getElementById("playground");
         this.context = this.playground.getContext('2d');
         this.header = document.getElementsByTagName("header")[0];
         this.info = document.getElementsByTagName("info")[0];
         this.canEdit = true;
         this.alive = [];
-        this.population = [0];
+        this.population = [];
         this.blocks = this.canBorn = this.toDie = {};
         this.generation = this.borned = this.loneliness = this.overcrowding = 0;
         this.gameStarted = false;
 
-        this.config = {
+        this.elements = {
           headerToggle: document.querySelector(".toggle-header"),
           infoToggle: document.querySelector(".toggle-info"),
           createButton: document.getElementById("create"),
-          closeMessageButton: document.getElementById("close_message"),
           autoGenerateButton: document.getElementById("auto"),
           startButtons: document.getElementsByClassName("play"),
           rowsInput: document.getElementById("rows"),
@@ -34,13 +34,21 @@
           .bindButtons();
       }
 
+      filterConfig(config) {
+        if (!config) {
+          config = {};
+        }
+        config.generationTime = config.generationTime ? config.generationTime : 500;
+        return config;
+      }
+
       /**
        * Bind toggle for right menu with config
        *
        * @returns {Life}
        */
       bindHeaderToggle() {
-        this.config.headerToggle.addEventListener('click', (e) => {
+        this.elements.headerToggle.addEventListener('click', (e) => {
           let icon = e.target.classList.contains('glyphicon') ? e.target : e.target.firstChild;
           let open = icon.classList.contains("glyphicon-eye-open");
           let right = 0;
@@ -64,7 +72,7 @@
        * @returns {Life}
        */
       bindConfigToggle() {
-        this.config.infoToggle.addEventListener('click', (e) => {
+        this.elements.infoToggle.addEventListener('click', (e) => {
           let icon = e.target.classList.contains('glyphicon') ? e.target : e.target.firstChild;
 
           icon.classList.toggle("glyphicon-eye-close");
@@ -76,16 +84,15 @@
       }
 
       /**
-       * Binds create, closeMessage, autoGenerate, playground, start buttons eventListeners
+       * Binds create, autoGenerate, playground, start buttons eventListeners
        */
       bindButtons() {
-        this.config.createButton.addEventListener('click', () => {
+        this.elements.createButton.addEventListener('click', () => {
           this.canEdit = false;
           this.create();
         });
 
-        this.config.closeMessageButton.addEventListener('click', () => this.closeMessage());
-        this.config.autoGenerateButton.addEventListener('click', () => this.autoGenerate());
+        this.elements.autoGenerateButton.addEventListener('click', () => this.autoGenerate());
 
         this.playground.addEventListener('mousedown', () => {
           this.canEdit = true;
@@ -96,11 +103,12 @@
           this.canEdit = false;
         });
 
-        let i = 0;
-        let list = this.config.startButtons;
-        let listLength = list.length;
-        for (i; i < listLength; i++) {
-          list[i].addEventListener('click', () => this.start());
+        let buttonIndex = 0;
+        let buttonsList = this.elements.startButtons;
+        let listLength = buttonsList.length;
+
+        for (buttonIndex; buttonIndex < listLength; buttonIndex++) {
+          buttonsList[buttonIndex].addEventListener('click', () => this.start());
         }
       }
 
@@ -110,8 +118,8 @@
       create() {
         this.canEdit = true;
 
-        this.rows = this.config.rowsInput.value;
-        this.columns = this.config.columnsInput.value;
+        this.rows = this.elements.rowsInput.value;
+        this.columns = this.elements.columnsInput.value;
 
         this.playground.style.display = "block";
         this.playground.width = this.columns * 10;
@@ -149,10 +157,10 @@
         this.columns = Math.floor((window.innerWidth - 35) / 10);
         this.rows = Math.floor((window.innerHeight - 35) / 10);
 
-        this.config.rowsInput.value = this.rows;
-        this.config.columnsInput.value = this.columns;
+        this.elements.rowsInput.value = this.rows;
+        this.elements.columnsInput.value = this.columns;
         this.create();
-        this.config.headerToggle.click();
+        this.elements.headerToggle.click();
       }
 
       /**
@@ -161,8 +169,9 @@
       createElements() {
         this.playground.addEventListener('mousemove', (e) => {
           if (this.canEdit) {
-            const x = Math.floor(e.x / 10) * 10 - 9;
-            const y = Math.floor(e.y / 10) * 10 - 9;
+            console.log(e);
+            const x = Math.floor(e.layerX / 10) * 10 - 9;
+            const y = Math.floor(e.layerY / 10) * 10 - 9;
 
             this.context.fillRect(x, y, 9, 9);
             this.blocks[x + ":" + y] = {x: x, y: y};
@@ -187,7 +196,6 @@
             //If everybody died
             if (Object.keys(this.blocks).length == 0) {
               clearInterval(interval);
-              this.showMessage("You died.");
               this.showStatistic();
 
               return false;
@@ -198,7 +206,6 @@
               && this.alive[this.alive.length - 2] == this.alive[this.alive.length - 3]
               && this.alive.length >= 2) {
               clearInterval(interval);
-              this.showMessage("It's a loop.");
               this.showStatistic();
 
               return false;
@@ -206,28 +213,8 @@
 
             this.filterBorned();
             this.nextGeneration();
-          }, 200);
+          }, this.config.generationTime);
         }
-      }
-
-      /**
-       * Отображает сообщение пользователю
-       * @param {string} text Текст сообщения
-       */
-      showMessage(text) {
-        document.querySelector(".modal-body p").textContent = text;
-        this.config.modalBlock.style.display = "block";
-        this.config.modalBlock.style.opacity = 1;
-        this.config.modalBlock.style.backgroundColor = "rgba(0,0,0,.4)";
-      }
-
-      /**
-       * Скрывает сообщение
-       */
-      closeMessage() {
-        this.config.modalBlock.style.display = "none";
-        this.config.modalBlock.style.opacity = 0;
-        this.config.modalBlock.style.backgroundColor = "";
       }
 
       /**
@@ -403,9 +390,7 @@
         const playGroundWidth = this.playground.width;
 
         this.context.clearRect(0, 0, playGroundWidth, playGroundHeight);
-
         this.context.font = "italic 14pt Arial";
-
         this.context.beginPath();
 
         //Left bottom
@@ -443,7 +428,10 @@
 
     }
 
-    new Life();
+    let config = {
+      generationTime: 200
+    };
+    new Life(config);
 
   });
 })();
